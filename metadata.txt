@@ -17,10 +17,10 @@ about=PG2GPKG exports entire PostgreSQL/PostGIS databases (or selected tables) t
 
 version=1.0.0
 author=Federico Gianoli
-email=federico.gianoli@example.com
-homepage=https://github.com/federicogianoli/pg2gpkg
-tracker=https://github.com/federicogianoli/pg2gpkg/issues
-repository=https://github.com/federicogianoli/pg2gpkg
+email=gianoli.federico@gmail.com
+homepage=https://github.com/fgianoli/db2gpkg
+tracker=https://github.com/fgianoli/db2gpkg/issues
+repository=https://github.com/fgianoli/db2gpkg
 
 tags=database,postgresql,postgis,geopackage,export,backup,migration
 
