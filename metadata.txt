@@ -1,0 +1,38 @@
+[general]
+name=PG2GPKG
+qgisMinimumVersion=3.16
+description=Export PostgreSQL/PostGIS databases to GeoPackage files with multiple export modes and QGIS project rewriting.
+about=PG2GPKG exports entire PostgreSQL/PostGIS databases (or selected tables) to GeoPackage files.
+    Three export modes are available:
+    • One GeoPackage per schema
+    • Everything in a single GeoPackage
+    • One GeoPackage per table
+    
+    Features:
+    • Tree-based schema/table selection with geometry info
+    • Automatic QGIS project export with datasource path rewriting
+    • Handles fid type conflicts, compressed project formats, and SSL mode normalization
+    • Filters system tables automatically
+    • Full Italian and English interface
+
+version=1.0.0
+author=Federico Gianoli
+email=federico.gianoli@example.com
+homepage=https://github.com/federicogianoli/pg2gpkg
+tracker=https://github.com/federicogianoli/pg2gpkg/issues
+repository=https://github.com/federicogianoli/pg2gpkg
+
+tags=database,postgresql,postgis,geopackage,export,backup,migration
+
+category=Database
+icon=icons/pg2gpkg.png
+experimental=False
+deprecated=False
+hasProcessingProvider=no
+
+changelog=
+    1.0.0 - Initial release
+        • Three export modes (per-schema, single, per-table)
+        • Selective table export with tree widget
+        • QGIS project export with datasource rewriting
+        • Italian and English interface
