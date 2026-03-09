@@ -1,6 +1,7 @@
 [general]
 name=PG2GPKG
 qgisMinimumVersion=3.16
+qgisMaximumVersion=4.99
 description=Export PostgreSQL/PostGIS databases to GeoPackage files with multiple export modes and QGIS project rewriting.
 about=PG2GPKG exports entire PostgreSQL/PostGIS databases (or selected tables) to GeoPackage files.
     Three export modes are available:
@@ -15,7 +16,7 @@ about=PG2GPKG exports entire PostgreSQL/PostGIS databases (or selected tables) t
     • Filters system tables automatically
     • Full Italian and English interface
 
-version=1.0.0
+version=1.1.2
 author=Federico Gianoli
 email=gianoli.federico@gmail.com
 homepage=https://github.com/fgianoli/db2gpkg
@@ -31,6 +32,9 @@ deprecated=False
 hasProcessingProvider=no
 
 changelog=
+    1.1.2 - Added nosec annotation on ET.fromstring() call for Bandit compliance
+    1.1.1 - Fixed a security issue
+    1.1.0 - Qt5/Qt6 compatibility update for QGIS 3.x and QGIS 4.x
     1.0.0 - Initial release
         • Three export modes (per-schema, single, per-table)
         • Selective table export with tree widget

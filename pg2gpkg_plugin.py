@@ -55,4 +55,4 @@ class PG2GPKGPlugin:
 
     def run(self):
         dialog = ExportPGtoGPKGDialog(self.iface, parent=self.iface.mainWindow())
-        dialog.exec_()
+        dialog.exec()

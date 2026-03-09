@@ -23,6 +23,64 @@ from .export_engine import ExportWorker
 
 LOG_TAG = "PG2GPKG"
 
+# ── Qt6 scoped-enum compatibility ─────────────────────────────────────
+try:
+    _EchoPassword = QLineEdit.EchoMode.Password
+except AttributeError:
+    _EchoPassword = QLineEdit.Password
+
+try:
+    _HdrStretch = QHeaderView.ResizeMode.Stretch
+except AttributeError:
+    _HdrStretch = QHeaderView.Stretch
+
+try:
+    _HdrResizeToContents = QHeaderView.ResizeMode.ResizeToContents
+except AttributeError:
+    _HdrResizeToContents = QHeaderView.ResizeToContents
+
+try:
+    _NoSelection = QAbstractItemView.SelectionMode.NoSelection
+except AttributeError:
+    _NoSelection = QAbstractItemView.NoSelection
+
+try:
+    _ItemIsUserCheckable = Qt.ItemFlag.ItemIsUserCheckable
+except AttributeError:
+    _ItemIsUserCheckable = Qt.ItemIsUserCheckable
+
+try:
+    _ItemIsAutoTristate = Qt.ItemFlag.ItemIsAutoTristate
+except AttributeError:
+    _ItemIsAutoTristate = Qt.ItemIsAutoTristate
+
+try:
+    _Checked = Qt.CheckState.Checked
+except AttributeError:
+    _Checked = Qt.Checked
+
+try:
+    _Unchecked = Qt.CheckState.Unchecked
+except AttributeError:
+    _Unchecked = Qt.Unchecked
+
+try:
+    _UserRole = Qt.ItemDataRole.UserRole
+except AttributeError:
+    _UserRole = Qt.UserRole
+
+try:
+    _WindowModal = Qt.WindowModality.WindowModal
+except AttributeError:
+    _WindowModal = Qt.WindowModal
+
+try:
+    _AcceptRole = QDialogButtonBox.ButtonRole.AcceptRole
+    _RejectRole = QDialogButtonBox.ButtonRole.RejectRole
+except AttributeError:
+    _AcceptRole = QDialogButtonBox.AcceptRole
+    _RejectRole = QDialogButtonBox.RejectRole
+
 
 class ExportPGtoGPKGDialog(QDialog):
 
@@ -68,7 +126,7 @@ class ExportPGtoGPKGDialog(QDialog):
         self.db_edit = QLineEdit()
         self.user_edit = QLineEdit()
         self.pass_edit = QLineEdit()
-        self.pass_edit.setEchoMode(QLineEdit.Password)
+        self.pass_edit.setEchoMode(_EchoPassword)
 
         self.use_manual = QCheckBox(self.tr("Use manual parameters"))
         self.use_manual.toggled.connect(self._toggle_manual)
@@ -97,10 +155,10 @@ class ExportPGtoGPKGDialog(QDialog):
             self.tr("Name"), self.tr("Type"),
             self.tr("Geometry"), self.tr("SRID"),
         ])
-        self.table_tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.table_tree.header().setSectionResizeMode(0, _HdrStretch)
         for col in (1, 2, 3):
-            self.table_tree.header().setSectionResizeMode(col, QHeaderView.ResizeToContents)
-        self.table_tree.setSelectionMode(QAbstractItemView.NoSelection)
+            self.table_tree.header().setSectionResizeMode(col, _HdrResizeToContents)
+        self.table_tree.setSelectionMode(_NoSelection)
         tl.addWidget(self.table_tree)
 
         br = QHBoxLayout()
@@ -179,8 +237,8 @@ class ExportPGtoGPKGDialog(QDialog):
         self.btn_export.setEnabled(False)
         btn_close = QPushButton(self.tr("Close"))
         btn_close.clicked.connect(self.reject)
-        bb.addButton(self.btn_export, QDialogButtonBox.AcceptRole)
-        bb.addButton(btn_close, QDialogButtonBox.RejectRole)
+        bb.addButton(self.btn_export, _AcceptRole)
+        bb.addButton(btn_close, _RejectRole)
         layout.addWidget(bb)
 
         self.status_label = QLabel("")
@@ -266,8 +324,8 @@ class ExportPGtoGPKGDialog(QDialog):
             self._all_tables[schema] = tables
 
             si = QTreeWidgetItem([schema, "", "", ""])
-            si.setFlags(si.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsAutoTristate)
-            si.setCheckState(0, Qt.Checked)
+            si.setFlags(si.flags() | _ItemIsUserCheckable | _ItemIsAutoTristate)
+            si.setCheckState(0, _Checked)
 
             for t in tables:
                 geom = t["geom_type"] or "—"
@@ -278,10 +336,10 @@ class ExportPGtoGPKGDialog(QDialog):
                     ttype += f"  [{t['geom_column']}]"
 
                 ci = QTreeWidgetItem([t["table"], ttype, geom, srid])
-                ci.setFlags(ci.flags() | Qt.ItemIsUserCheckable)
-                ci.setCheckState(0, Qt.Checked)
-                ci.setData(0, Qt.UserRole, t)
-                ci.setData(0, Qt.UserRole + 1, schema)
+                ci.setFlags(ci.flags() | _ItemIsUserCheckable)
+                ci.setCheckState(0, _Checked)
+                ci.setData(0, _UserRole, t)
+                ci.setData(0, _UserRole + 1, schema)
                 si.addChild(ci)
                 n += 1
 
@@ -295,7 +353,7 @@ class ExportPGtoGPKGDialog(QDialog):
                 db=params["database"]))
 
     def _set_all_check(self, on):
-        st = Qt.Checked if on else Qt.Unchecked
+        st = _Checked if on else _Unchecked
         for i in range(self.table_tree.topLevelItemCount()):
             self.table_tree.topLevelItem(i).setCheckState(0, st)
 
@@ -304,9 +362,9 @@ class ExportPGtoGPKGDialog(QDialog):
             si = self.table_tree.topLevelItem(i)
             for j in range(si.childCount()):
                 ci = si.child(j)
-                info = ci.data(0, Qt.UserRole)
+                info = ci.data(0, _UserRole)
                 ci.setCheckState(
-                    0, Qt.Checked if info and info.get("geom_column") else Qt.Unchecked)
+                    0, _Checked if info and info.get("geom_column") else _Unchecked)
 
     def _selected_tables(self):
         """Return {schema: [table_info, ...]} for checked items."""
@@ -315,9 +373,9 @@ class ExportPGtoGPKGDialog(QDialog):
             si = self.table_tree.topLevelItem(i)
             for j in range(si.childCount()):
                 ci = si.child(j)
-                if ci.checkState(0) == Qt.Checked:
-                    info = ci.data(0, Qt.UserRole)
-                    schema = ci.data(0, Qt.UserRole + 1)
+                if ci.checkState(0) == _Checked:
+                    info = ci.data(0, _UserRole)
+                    schema = ci.data(0, _UserRole + 1)
                     if schema and info:
                         result.setdefault(schema, []).append(info)
         return result
@@ -368,7 +426,7 @@ class ExportPGtoGPKGDialog(QDialog):
         self._progress = QProgressDialog(
             self.tr("Exporting..."), self.tr("Cancel"), 0, total + 1, self)
         self._progress.setWindowTitle(self.tr("Export PostgreSQL → GeoPackage"))
-        self._progress.setWindowModality(Qt.WindowModal)
+        self._progress.setWindowModality(_WindowModal)
         self._progress.setMinimumDuration(0)
         self._progress.show()
 

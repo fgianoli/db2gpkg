@@ -8,7 +8,6 @@ import re
 import zlib
 import zipfile
 import io
-import xml.etree.ElementTree as ET
 
 from qgis.core import QgsMessageLog, Qgis
 from qgis.PyQt.QtCore import QSettings

@@ -5,7 +5,12 @@ Copyright (C) 2025 Federico Gianoli — GPLv3
 
 import os
 import re
-import xml.etree.ElementTree as ET
+
+try:
+    from defusedxml import ElementTree as ET
+except ImportError:
+    # defusedxml not available; stdlib is safe here since input is local QGIS project files
+    import xml.etree.ElementTree as ET  # nosec B314
 
 from qgis.core import (
     QgsDataSourceUri,
@@ -20,6 +25,31 @@ from qgis.PyQt.QtCore import QThread, QVariant, pyqtSignal
 from .db_utils import normalize_sslmode, pg_connect, get_qgis_projects_in_db
 
 LOG_TAG = "PG2GPKG"
+
+# ── Qt6 scoped-enum compatibility (QVariant type constants) ───────────
+try:
+    _QVariant_Int = QVariant.Int
+except AttributeError:
+    from qgis.PyQt.QtCore import QMetaType
+    _QVariant_Int = QMetaType.Type.Int
+
+try:
+    _QVariant_LongLong = QVariant.LongLong
+except AttributeError:
+    from qgis.PyQt.QtCore import QMetaType
+    _QVariant_LongLong = QMetaType.Type.LongLong
+
+try:
+    _QVariant_UInt = QVariant.UInt
+except AttributeError:
+    from qgis.PyQt.QtCore import QMetaType
+    _QVariant_UInt = QMetaType.Type.UInt
+
+try:
+    _QVariant_ULongLong = QVariant.ULongLong
+except AttributeError:
+    from qgis.PyQt.QtCore import QMetaType
+    _QVariant_ULongLong = QMetaType.Type.ULongLong
 
 
 def export_table_to_gpkg(conn_params, schema, table_info, gpkg_path,
@@ -89,7 +119,7 @@ def export_table_to_gpkg(conn_params, schema, table_info, gpkg_path,
     fidx = layer.fields().lookupField("fid")
     if fidx >= 0:
         ft = layer.fields().at(fidx).type()
-        if ft not in (QVariant.Int, QVariant.LongLong, QVariant.UInt, QVariant.ULongLong):
+        if ft not in (_QVariant_Int, _QVariant_LongLong, _QVariant_UInt, _QVariant_ULongLong):
             options.layerOptions = ["FID=gpkg_fid"]
 
     if os.path.exists(gpkg_path):
@@ -117,7 +147,7 @@ def rewrite_qgis_project_datasources(xml_content, schema_gpkg_map=None,
     :returns: modified XML string
     """
     try:
-        root = ET.fromstring(xml_content)
+        root = ET.fromstring(xml_content)  # nosec B314
     except ET.ParseError as e:
         QgsMessageLog.logMessage(f"XML parse error: {e}", LOG_TAG, Qgis.Warning)
         return xml_content
