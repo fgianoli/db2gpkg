@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- GeoPackage box (source) -->
+  <rect x="4" y="22" width="16" height="20" rx="2" fill="#4caf50" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="12" y="36" text-anchor="middle" fill="white" font-size="7" font-family="Arial" font-weight="bold">GP</text>
+  <!-- Arrow pointing into the database -->
+  <polygon points="22,28 28,22 28,25 40,25 40,31 28,31 28,34" fill="#e8a838" stroke="#b07a1a" stroke-width="1"/>
+  <!-- PostgreSQL cylinder (destination) -->
+  <ellipse cx="48" cy="16" rx="14" ry="6" fill="#336791" stroke="#1d3f5e" stroke-width="1.5"/>
+  <rect x="34" y="16" width="28" height="24" fill="#336791"/>
+  <ellipse cx="48" cy="40" rx="14" ry="6" fill="#336791" stroke="#1d3f5e" stroke-width="1.5"/>
+  <line x1="34" y1="16" x2="34" y2="40" stroke="#1d3f5e" stroke-width="1.5"/>
+  <line x1="62" y1="16" x2="62" y2="40" stroke="#1d3f5e" stroke-width="1.5"/>
+  <ellipse cx="48" cy="16" rx="14" ry="6" fill="#4a8abf" stroke="#1d3f5e" stroke-width="1.5"/>
+</svg>

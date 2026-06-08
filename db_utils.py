@@ -112,6 +112,144 @@ def get_schemas(conn):
         cur.close()
 
 
+def table_exists(conn, schema, table):
+    """Return True if the given table exists in the schema."""
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = %s AND table_name = %s
+            )
+        """, (schema, table))
+        return bool(cur.fetchone()[0])
+    finally:
+        cur.close()
+
+
+def get_table_columns(conn, schema, table):
+    """Return list of column names for an existing table (in declaration order)."""
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT column_name FROM information_schema.columns
+            WHERE table_schema = %s AND table_name = %s
+            ORDER BY ordinal_position
+        """, (schema, table))
+        return [r[0] for r in cur.fetchall()]
+    finally:
+        cur.close()
+
+
+def drop_table_cascade(conn, schema, table):
+    """Drop a table with CASCADE. Returns True if it ran without error."""
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            psql.SQL("DROP TABLE IF EXISTS {}.{} CASCADE").format(
+                psql.Identifier(schema), psql.Identifier(table)))
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cur.close()
+
+
+def rename_table_columns(conn, schema, table, renames):
+    """Apply ALTER TABLE ... RENAME COLUMN for each (old, new) in renames.
+    Skips rows where old == new. Commits at the end."""
+    if not renames:
+        return
+    cur = conn.cursor()
+    try:
+        for old, new in renames:
+            if old == new:
+                continue
+            cur.execute(
+                psql.SQL("ALTER TABLE {}.{} RENAME COLUMN {} TO {}").format(
+                    psql.Identifier(schema), psql.Identifier(table),
+                    psql.Identifier(old), psql.Identifier(new)))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cur.close()
+
+
+def pg_is_in_recovery(conn):
+    """True if the server is currently in WAL recovery (standby or post-crash)."""
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT pg_is_in_recovery()")
+        row = cur.fetchone()
+        return bool(row[0]) if row else False
+    finally:
+        cur.close()
+
+
+def get_server_version(conn):
+    """Return PostgreSQL server_version_num (e.g. '150004' for 15.4) or ''."""
+    cur = conn.cursor()
+    try:
+        cur.execute("SHOW server_version_num")
+        row = cur.fetchone()
+        return str(row[0]) if row else ""
+    except Exception:
+        return ""
+    finally:
+        cur.close()
+
+
+def get_postgis_version(conn):
+    """Return PostGIS version string (e.g. '3.4.2') or ''. None if extension absent."""
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT extversion FROM pg_extension WHERE extname='postgis'")
+        row = cur.fetchone()
+        return row[0] if row else ""
+    except Exception:
+        return ""
+    finally:
+        cur.close()
+
+
+def create_schema(conn, schema_name):
+    """Run CREATE SCHEMA IF NOT EXISTS for the given identifier.
+    The name is passed through psql.Identifier so quoting is automatic."""
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            psql.SQL("CREATE SCHEMA IF NOT EXISTS {}").format(
+                psql.Identifier(schema_name)))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cur.close()
+
+
+def get_writable_schemas(conn):
+    """Return list of schemas where the current user has CREATE privilege."""
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT n.nspname
+            FROM pg_namespace n
+            WHERE n.nspname NOT IN ('pg_catalog','information_schema','pg_toast','topology')
+              AND n.nspname NOT LIKE 'pg_temp_%'
+              AND n.nspname NOT LIKE 'pg_toast_temp_%'
+              AND has_schema_privilege(current_user, n.nspname, 'CREATE')
+            ORDER BY n.nspname
+        """)
+        return [r[0] for r in cur.fetchall()]
+    finally:
+        cur.close()
+
+
 def get_tables_and_views(conn, schema):
     """
     Return list of dicts with table info.

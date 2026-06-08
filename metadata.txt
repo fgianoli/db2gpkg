@@ -1,29 +1,37 @@
 [general]
 name=PG2GPKG
-qgisMinimumVersion=3.16
+qgisMinimumVersion=3.20
 qgisMaximumVersion=4.99
-description=Export PostgreSQL/PostGIS databases to GeoPackage files with multiple export modes and QGIS project rewriting.
-about=PG2GPKG exports entire PostgreSQL/PostGIS databases (or selected tables) to GeoPackage files.
-    Three export modes are available:
+description=Bidirectional bridge between PostgreSQL/PostGIS and GeoPackage: export databases to GPKG and import GPKG into PostGIS.
+about=PG2GPKG moves data both ways between PostgreSQL/PostGIS and GeoPackage.
+
+    EXPORT (PostgreSQL → GeoPackage):
     • One GeoPackage per schema
     • Everything in a single GeoPackage
     • One GeoPackage per table
-    
-    Features:
-    • Tree-based schema/table selection with geometry info
     • Automatic QGIS project export with datasource path rewriting
+
+    IMPORT (GeoPackage → PostgreSQL):
+    • Multi-layer batch import with per-layer destination schema/table
+    • Append, replace or create modes
+    • Interactive field mapping (rename / exclude columns)
+    • Optional reprojection to a target SRID
+    • Fast COPY-based loading via GDAL (PG_USE_COPY)
+
+    General:
+    • Tree/table-based layer selection with geometry info
     • Handles fid type conflicts, compressed project formats, and SSL mode normalization
     • Filters system tables automatically
     • Full Italian and English interface
 
-version=1.1.2
+version=2.0
 author=Federico Gianoli
 email=gianoli.federico@gmail.com
 homepage=https://github.com/fgianoli/db2gpkg
 tracker=https://github.com/fgianoli/db2gpkg/issues
 repository=https://github.com/fgianoli/db2gpkg
 
-tags=database,postgresql,postgis,geopackage,export,backup,migration
+tags=database,postgresql,postgis,geopackage,export,import,backup,migration
 
 category=Database
 icon=icons/pg2gpkg.png
@@ -32,6 +40,43 @@ deprecated=False
 hasProcessingProvider=no
 
 changelog=
+    2.0 - Major release: bidirectional PostgreSQL/PostGIS ⇄ GeoPackage.
+        • Adds the full GeoPackage → PostgreSQL/PostGIS import workflow as a
+          first-class feature alongside the existing export (hence the major bump).
+        • Import: multi-layer batch with per-layer schema/table/mode, interactive
+          field mapping with persisted presets, layer preview, reprojection,
+          source-SRID assignment for layers without a CRS, "New schema..." helper.
+        • Resilience: pre-import health check (pg_is_in_recovery, 3D+COPY warning),
+          auto-retry on transient errors, "Retry failed" button, Advanced options
+          (disable COPY, skip spatial index, force 2D, pause between layers).
+        • Append into a renamed-column table now writes the final column names
+          directly (fixes silent column mismatch on append + field rename).
+        • Dedicated import icon; correct window icons on both dialogs.
+        • Confirmed compatibility with QGIS 4 (Qt6).
+    1.2.5 - Mitigations for fragile PostgreSQL servers:
+        • New "Advanced options" panel: disable COPY, skip spatial index, force 2D, pause between layers
+        • Pre-import health check: detects pg_is_in_recovery() and warns on 3D/Measured + COPY combo
+        • Per-layer phase logging (copy/index/2D toggles, feature count) to help diagnose server crashes
+    1.2.4 - Auto-retry on transient PostgreSQL errors:
+        • Recognises "in recovery mode", "starting up", "server closed unexpectedly",
+          "too many connections", etc., and auto-retries with 2/5/10s backoff (max 3 retries).
+        • Retry progress is shown in the dialog and cancellable.
+    1.2.3 - Import resilience:
+        • Failure messages now always include the source layer and the destination table
+        • New "Retry failed (N)" button re-runs only the layers that failed (e.g. on PG recovery)
+        • Final report lists each failed layer with its destination and error reason
+    1.2.2 - Import UX:
+        • "New schema..." button creates schemas directly from the dialog
+        • Clearer source-SRID UX (no default value, row disabled when no layer needs it, tooltips)
+    1.2.1 - Import hardening:
+        • Field renames via ALTER TABLE (no in-memory copy)
+        • Explicit DROP TABLE CASCADE for replace mode
+        • Append-mode column-mismatch validation
+        • Password isolated via PGPASSWORD env var
+        • Live per-layer progress via QgsFeedback
+        • Layer preview, field-mapping presets, batch helpers, source-SRID override
+        • Destination identifier validation
+    1.2.0 - GeoPackage → PostgreSQL import (multi-layer batch, field mapping, reprojection, COPY-based fast load)
     1.1.2 - Added nosec annotation on ET.fromstring() call for Bandit compliance
     1.1.1 - Fixed a security issue
     1.1.0 - Qt5/Qt6 compatibility update for QGIS 3.x and QGIS 4.x

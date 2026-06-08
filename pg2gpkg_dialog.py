@@ -7,6 +7,7 @@ import os
 
 from qgis.core import QgsApplication, QgsMessageLog, QgsProject, Qgis
 from qgis.PyQt.QtCore import Qt, QCoreApplication, QSettings
+from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
     QLineEdit, QPushButton, QFileDialog, QComboBox,
@@ -14,6 +15,13 @@ from qgis.PyQt.QtWidgets import (
     QGroupBox, QAbstractItemView, QTreeWidget, QTreeWidgetItem,
     QHeaderView, QRadioButton, QButtonGroup, QDialogButtonBox,
 )
+
+# Collapsible group box (accordion). Falls back to a plain group box if the
+# QGIS gui module is unavailable.
+try:
+    from qgis.gui import QgsCollapsibleGroupBox as _CollapsibleGroupBox
+except ImportError:
+    _CollapsibleGroupBox = QGroupBox
 
 from .db_utils import (
     HAS_PSYCOPG2, get_pg_connections, pg_connect,
@@ -94,6 +102,10 @@ class ExportPGtoGPKGDialog(QDialog):
         self._progress = None
 
         self.setWindowTitle(self.tr("Export PostgreSQL → GeoPackage"))
+        icon = QIcon(os.path.join(
+            os.path.dirname(__file__), "icons", "pg2gpkg.png"))
+        if not icon.isNull():
+            self.setWindowIcon(icon)
         self.setMinimumWidth(720)
         self.setMinimumHeight(680)
         self._setup_ui()
@@ -109,8 +121,9 @@ class ExportPGtoGPKGDialog(QDialog):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        # ── Connection ────────────────────────────────────────────
-        cg = QGroupBox(self.tr("PostgreSQL Connection"))
+        # ── Connection (collapsible / accordion) ──────────────────
+        cg = _CollapsibleGroupBox(self.tr("PostgreSQL Connection"))
+        self.conn_group = cg
         cl = QFormLayout()
         cg.setLayout(cl)
 
@@ -144,6 +157,10 @@ class ExportPGtoGPKGDialog(QDialog):
         btn_connect.clicked.connect(self._load_all)
         cl.addRow(btn_connect)
         layout.addWidget(cg)
+        # Start collapsed to keep the dialog compact; the user expands it only
+        # to connect, and it re-collapses automatically afterwards.
+        if hasattr(cg, "setCollapsed"):
+            cg.setCollapsed(True)
 
         # ── Table tree ────────────────────────────────────────────
         tg = QGroupBox(self.tr("Schemas and tables"))
@@ -347,6 +364,14 @@ class ExportPGtoGPKGDialog(QDialog):
 
         self.table_tree.expandAll()
         self.btn_export.setEnabled(True)
+
+        # Show the connected database in the group title and collapse it again
+        # to reclaim vertical space now that the connection is established.
+        self.conn_group.setTitle(
+            self.tr("PostgreSQL Connection — {db}").format(db=params["database"]))
+        if hasattr(self.conn_group, "setCollapsed"):
+            self.conn_group.setCollapsed(True)
+
         self.status_label.setText(
             self.tr("{count} tables/views in {schemas} schemas — {db}").format(
                 count=n, schemas=len(self._all_tables),
